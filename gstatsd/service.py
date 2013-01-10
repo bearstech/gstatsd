@@ -52,13 +52,18 @@ class Stats(object):
         self.interval = INTERVAL
 
 
-def daemonize(umask=0027):
+def daemonize(umask=0027, pidfile=None, uid=None):
     if gevent.fork():
         os._exit(0)
     os.setsid()
     if gevent.fork():
         os._exit(0)
+    if pidfile:
+        with file(pidfile, 'w') as f:
+            f.write(str(os.getpid()))
     os.umask(umask)
+    if uid:
+        os.setuid(uid)
     fd_limit = resource.getrlimit(resource.RLIMIT_NOFILE)[1]
     if fd_limit == resource.RLIM_INFINITY:
         fd_limit = 1024
@@ -163,7 +168,7 @@ class StatsDaemon(object):
         self._flush_task = gevent.spawn(_flush_impl)
 
         # start accepting connections
-        self._sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, 
+        self._sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM,
             socket.IPPROTO_UDP)
         self._sock.bind(self._bindaddr)
         while 1:
@@ -211,7 +216,7 @@ class StatsDaemon(object):
 def main():
     opts = optparse.OptionParser(description=DESCRIPTION, version=__version__,
         add_help_option=False)
-    opts.add_option('-b', '--bind', dest='bind_addr', default=':8125', 
+    opts.add_option('-b', '--bind', dest='bind_addr', default=':8125',
         help="bind [host]:port (host defaults to '')")
     opts.add_option('-s', '--sink', dest='sink', action='append', default=[],
         help="a graphite service to which stats are sent ([host]:port).")
@@ -223,6 +228,9 @@ def main():
         help="percent threshold (default 90)")
     opts.add_option('-D', '--daemonize', dest='daemonize', action='store_true',
         help='daemonize the service')
+    opts.add_option('-P', '--pid', default='/var/run/gstatsd.pid', dest='pid',
+        help='pid path')
+    opts.add_option('-u', '--uid', dest='uid', type='int', help='owner of the daemon')
     opts.add_option('-h', '--help', dest='usage', action='store_true')
 
     (options, args) = opts.parse_args()
@@ -234,12 +242,12 @@ def main():
         sys.exit()
 
     if options.daemonize:
-        daemonize()
+        daemonize(pidfile=options.pid, uid=options.uid)
 
     sd = StatsDaemon(options.bind_addr, options.sink, options.interval,
         options.percent, options.verbose)
     sd.start()
- 
+
 
 if __name__ == '__main__':
     main()
