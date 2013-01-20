@@ -93,7 +93,7 @@ class StatsDaemon(object):
     A statsd service implementation in Python + gevent.
     """
 
-    def __init__(self, bindaddr, sinkspecs, interval, percent, debug=0):
+    def __init__(self, bindaddr, sinkspecs, interval, percent, debug=0, prefix=None):
         _, host, port = parse_addr(bindaddr)
         if port is None:
             self.exit(E_BADADDR % bindaddr)
@@ -106,7 +106,10 @@ class StatsDaemon(object):
         # construct the sink and add hosts to it
         if not sinkspecs:
             self.exit(E_NOSINKS)
-        self._sink = sink.GraphiteSink()
+        if prefix is not None:
+            self._sink = sink.GraphiteSink(prefix)
+        else:
+            self._sink = sink.GraphiteSink()
         errors = []
         for spec in sinkspecs:
             try:
@@ -163,7 +166,7 @@ class StatsDaemon(object):
         self._flush_task = gevent.spawn(_flush_impl)
 
         # start accepting connections
-        self._sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, 
+        self._sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM,
             socket.IPPROTO_UDP)
         self._sock.bind(self._bindaddr)
         while 1:
@@ -211,7 +214,7 @@ class StatsDaemon(object):
 def main():
     opts = optparse.OptionParser(description=DESCRIPTION, version=__version__,
         add_help_option=False)
-    opts.add_option('-b', '--bind', dest='bind_addr', default=':8125', 
+    opts.add_option('-b', '--bind', dest='bind_addr', default=':8125',
         help="bind [host]:port (host defaults to '')")
     opts.add_option('-s', '--sink', dest='sink', action='append', default=[],
         help="a graphite service to which stats are sent ([host]:port).")
@@ -221,6 +224,7 @@ def main():
         help="flush interval, in seconds (default 10)")
     opts.add_option('-p', '--percent', dest='percent', default=PERCENT,
         help="percent threshold (default 90)")
+    opts.add_option('--prefix', dest="prefix", help="prefix path for graphite")
     opts.add_option('-D', '--daemonize', dest='daemonize', action='store_true',
         help='daemonize the service')
     opts.add_option('-h', '--help', dest='usage', action='store_true')
@@ -237,9 +241,9 @@ def main():
         daemonize()
 
     sd = StatsDaemon(options.bind_addr, options.sink, options.interval,
-        options.percent, options.verbose)
+                     options.percent, options.verbose, options.prefix)
     sd.start()
- 
+
 
 if __name__ == '__main__':
     main()

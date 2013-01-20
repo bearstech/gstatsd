@@ -38,8 +38,9 @@ class GraphiteSink(Sink):
     Sends stats to one or more Graphite servers.
     """
 
-    def __init__(self):
+    def __init__(self, prefix="stats.timers"):
         self._hosts = []
+        self.prefix = prefix
 
     def add(self, spec):
         self._hosts.append(self._parse_hostport(spec))
@@ -71,7 +72,7 @@ class GraphiteSink(Sink):
                     max_at_thresh = tmp[-1]
                     mean = sum(tmp) / idx
 
-            key = 'stats.timers.%s' % key
+            key = '%s.%s' % (self.prefix, key)
             buf.write('%s.mean %f %d\n' % (key, mean, now))
             buf.write('%s.upper %f %d\n' % (key, vmax, now))
             buf.write('%s.upper_%d %f %d\n' % (key, pct, max_at_thresh, now))
