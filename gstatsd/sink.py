@@ -99,4 +99,3 @@ class GraphiteSink(Sink):
                 sock.close()
             except Exception, ex:
                 self.error(E_SENDFAIL % ('graphite', host, ex))
-

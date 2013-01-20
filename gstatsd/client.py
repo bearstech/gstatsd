@@ -20,7 +20,7 @@ class StatsClient(object):
             hostport = StatsClient.HOSTPORT
         self._hostport = hostport
         self._sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        
+
     def timer(self, key, timestamp, sample_rate=1):
         self._send('%s:%d|ms' % (key, round(timestamp)), sample_rate)
 
@@ -95,4 +95,3 @@ class Stats(object):
 
     def get_timer(self, key):
         return StatsTimer(self._client, key)
-

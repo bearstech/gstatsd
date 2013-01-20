@@ -1,13 +1,11 @@
 
 # standard
-import cStringIO
 import optparse
 import os
 import resource
 import signal
 import string
 import sys
-import time
 import traceback
 from collections import defaultdict
 
@@ -16,7 +14,8 @@ import sink
 from core import __version__
 
 # vendor
-import gevent, gevent.socket
+import gevent
+import gevent.socket
 socket = gevent.socket
 
 
@@ -78,7 +77,7 @@ def parse_addr(text):
     if text:
         parts = text.split(':')
         length = len(parts)
-        if length== 3:
+        if length == 3:
             return parts[0], parts[1], int(parts[2])
         elif length == 2:
             return None, parts[0], int(parts[1])
@@ -156,15 +155,15 @@ class StatsDaemon(object):
                 # the stats packet to one or more hosts.
                 try:
                     self._sink.send(stats)
-                except Exception, ex:
+                except Exception:
                     trace = traceback.format_tb(sys.exc_info()[-1])
                     self.error(''.join(trace))
 
         self._flush_task = gevent.spawn(_flush_impl)
 
         # start accepting connections
-        self._sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, 
-            socket.IPPROTO_UDP)
+        self._sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM,
+                                   socket.IPPROTO_UDP)
         self._sock.bind(self._bindaddr)
         while 1:
             try:
@@ -210,19 +209,19 @@ class StatsDaemon(object):
 
 def main():
     opts = optparse.OptionParser(description=DESCRIPTION, version=__version__,
-        add_help_option=False)
-    opts.add_option('-b', '--bind', dest='bind_addr', default=':8125', 
-        help="bind [host]:port (host defaults to '')")
+                                 add_help_option=False)
+    opts.add_option('-b', '--bind', dest='bind_addr', default=':8125',
+                    help="bind [host]:port (host defaults to '')")
     opts.add_option('-s', '--sink', dest='sink', action='append', default=[],
-        help="a graphite service to which stats are sent ([host]:port).")
+                    help="a graphite service to which stats are sent ([host]:port).")
     opts.add_option('-v', dest='verbose', action='count', default=0,
-        help="increase verbosity (currently used for debugging)")
+                    help="increase verbosity (currently used for debugging)")
     opts.add_option('-f', '--flush', dest='interval', default=INTERVAL,
-        help="flush interval, in seconds (default 10)")
+                    help="flush interval, in seconds (default 10)")
     opts.add_option('-p', '--percent', dest='percent', default=PERCENT,
-        help="percent threshold (default 90)")
+                    help="percent threshold (default 90)")
     opts.add_option('-D', '--daemonize', dest='daemonize', action='store_true',
-        help='daemonize the service')
+                    help='daemonize the service')
     opts.add_option('-h', '--help', dest='usage', action='store_true')
 
     (options, args) = opts.parse_args()
@@ -237,10 +236,9 @@ def main():
         daemonize()
 
     sd = StatsDaemon(options.bind_addr, options.sink, options.interval,
-        options.percent, options.verbose)
+                     options.percent, options.verbose)
     sd.start()
- 
+
 
 if __name__ == '__main__':
     main()
-
