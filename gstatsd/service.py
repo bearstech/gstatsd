@@ -49,6 +49,7 @@ class Stats(object):
     def __init__(self):
         self.timers = defaultdict(list)
         self.counts = defaultdict(float)
+        self.gauges = defaultdict(float)
         self.percent = PERCENT
         self.interval = INTERVAL
 
@@ -219,6 +220,10 @@ class StatsDaemon(object):
                     srate = float(fields[2][1:])
                 value = float(value if value else 1) * (1 / srate)
                 stats.counts[key] += value
+            elif stype == 'g':
+                value = float(value if value else 1)
+                stats.gauges[key] = value
+
 
 
 def main():
