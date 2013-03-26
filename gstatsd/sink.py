@@ -100,7 +100,7 @@ class GraphiteSink(Sink):
                 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 if self._ca is not None:
                     conn = ssl.SSLSocket(sock,
-                                         ssl_version=ssl.PROTOCOL_SSLv23,
+                                         ssl_version=ssl.PROTOCOL_SSLv3,
                                          keyfile=self._key,
                                          certfile=self._cert,
                                          ca_certs=self._ca,
