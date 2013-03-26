@@ -10,6 +10,7 @@ import sys
 import time
 import traceback
 from collections import defaultdict
+from os.path import abspath
 
 # local
 import sink
@@ -83,7 +84,7 @@ def parse_addr(text):
     if text:
         parts = text.split(':')
         length = len(parts)
-        if length== 3:
+        if length == 3:
             return parts[0], parts[1], int(parts[2])
         elif length == 2:
             return None, parts[0], int(parts[1])
@@ -91,6 +92,10 @@ def parse_addr(text):
             return None, '', int(parts[0])
     return None, None, None
 
+def resolve(path):
+    if path is None:
+        return None
+    return abspath(path)
 
 class StatsDaemon(object):
 
@@ -98,7 +103,7 @@ class StatsDaemon(object):
     A statsd service implementation in Python + gevent.
     """
 
-    def __init__(self, bindaddr, sinkspecs, interval, percent, debug=0):
+    def __init__(self, bindaddr, sinkspecs, interval, percent, debug=0, ca=None, cert=None, key=None):
         _, host, port = parse_addr(bindaddr)
         if port is None:
             self.exit(E_BADADDR % bindaddr)
@@ -111,7 +116,8 @@ class StatsDaemon(object):
         # construct the sink and add hosts to it
         if not sinkspecs:
             self.exit(E_NOSINKS)
-        self._sink = sink.GraphiteSink()
+        self._sink = sink.GraphiteSink(
+                ca=resolve(ca), cert=resolve(cert), key=resolve(key))
         errors = []
         for spec in sinkspecs:
             try:
@@ -232,6 +238,9 @@ def main():
         help='pid path')
     opts.add_option('-u', '--uid', dest='uid', type='int', help='owner of the daemon')
     opts.add_option('-h', '--help', dest='usage', action='store_true')
+    opts.add_option('', '--ca', dest='ca', help='Certificat Authority')
+    opts.add_option('', '--cert', dest='cert', help='User certificat')
+    opts.add_option('', '--key', dest='key', help='User key')
 
     (options, args) = opts.parse_args()
 
@@ -245,10 +254,10 @@ def main():
         daemonize(pidfile=options.pid, uid=options.uid)
 
     sd = StatsDaemon(options.bind_addr, options.sink, options.interval,
-        options.percent, options.verbose)
+            options.percent, debug=options.verbose,
+            ca=options.ca, cert=options.cert, key=options.key)
     sd.start()
 
 
 if __name__ == '__main__':
     main()
-

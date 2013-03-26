@@ -6,6 +6,7 @@ import time
 
 # vendor
 from gevent import socket
+from gevent import ssl
 
 E_BADSPEC = "bad sink spec %r: %s"
 E_SENDFAIL = 'failed to send stats to %s %s: %s'
@@ -38,8 +39,11 @@ class GraphiteSink(Sink):
     Sends stats to one or more Graphite servers.
     """
 
-    def __init__(self):
+    def __init__(self, ca=None, cert=None, key=None):
         self._hosts = []
+        self._ca = ca
+        self._cert = cert
+        self._key = key
 
     def add(self, spec):
         self._hosts.append(self._parse_hostport(spec))
@@ -94,9 +98,17 @@ class GraphiteSink(Sink):
             # flush stats to graphite
             try:
                 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                if self._ca is not None:
+                    conn = ssl.SSLSocket(sock,
+                                         ssl_version=ssl.PROTOCOL_SSLv23,
+                                         keyfile=self._key,
+                                         certfile=self._cert,
+                                         ca_certs=self._ca,
+                                         cert_reqs=ssl.CERT_REQUIRED)
+                    #do_handshake_on_connect=False)
+                    sock = conn
                 sock.connect(host)
                 sock.sendall(buf.getvalue())
                 sock.close()
             except Exception, ex:
                 self.error(E_SENDFAIL % ('graphite', host, ex))
-
