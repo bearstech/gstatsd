@@ -104,8 +104,12 @@ class StatsDaemon(object):
     A statsd service implementation in Python + gevent.
     """
 
+<<<<<<< HEAD
     def __init__(self, bindaddr, sinkspecs, interval, percent, debug=0,
             ca=None, cert=None, key=None, hostname=None):
+=======
+    def __init__(self, bindaddr, sinkspecs, interval, percent, debug=0, ca=None, cert=None, key=None):
+>>>>>>> Handling ssl authentification to carbon server.
         _, host, port = parse_addr(bindaddr)
         if port is None:
             self.exit(E_BADADDR % bindaddr)
@@ -119,8 +123,12 @@ class StatsDaemon(object):
         if not sinkspecs:
             self.exit(E_NOSINKS)
         self._sink = sink.GraphiteSink(
+<<<<<<< HEAD
                 ca=resolve(ca), cert=resolve(cert), key=resolve(key),
                 hostname=hostname)
+=======
+                ca=resolve(ca), cert=resolve(cert), key=resolve(key))
+>>>>>>> Handling ssl authentification to carbon server.
         errors = []
         for spec in sinkspecs:
             try:
