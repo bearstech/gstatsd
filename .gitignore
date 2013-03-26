@@ -2,4 +2,8 @@
 *.egg-info
 .coverage
 build
-
+.Python
+bin
+dist
+include
+lib
