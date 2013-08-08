@@ -39,11 +39,14 @@ class GraphiteSink(Sink):
     Sends stats to one or more Graphite servers.
     """
 
-    def __init__(self, ca=None, cert=None, key=None):
+    def __init__(self, ca=None, cert=None, key=None, hostname=None):
         self._hosts = []
         self._ca = ca
         self._cert = cert
         self._key = key
+        if hostname is None:
+            hostname = socket.gethostname()
+        self._hostname = hostname
 
     def add(self, spec):
         self._hosts.append(self._parse_hostport(spec))
@@ -75,7 +78,7 @@ class GraphiteSink(Sink):
                     max_at_thresh = tmp[-1]
                     mean = sum(tmp) / idx
 
-            key = 'stats.timers.%s' % key
+            key = 'servers.%s.stats.timers.%s' % (self._hostname, key)
             buf.write('%s.mean %f %d\n' % (key, mean, now))
             buf.write('%s.upper %f %d\n' % (key, vmax, now))
             buf.write('%s.upper_%d %f %d\n' % (key, pct, max_at_thresh, now))
@@ -86,11 +89,11 @@ class GraphiteSink(Sink):
         # counter stats
         counts = stats.counts
         for key, val in counts.iteritems():
-            buf.write('stats.%s %f %d\n' % (key, val / stats.interval, now))
-            buf.write('stats_counts.%s %f %d\n' % (key, val, now))
+            buf.write('servers.%s.stats.%s %f %d\n' % (self._hostname, key, val / stats.interval, now))
+            buf.write('servers.%s.stats_counts.%s %f %d\n' % (self._hostname, key, val, now))
             num_stats += 1
 
-        buf.write('statsd.numStats %d %d\n' % (num_stats, now))
+        buf.write('servers.%s.statsd.numStats %d %d\n' % (self._hostname, num_stats, now))
 
         # TODO: add support for N retries
 

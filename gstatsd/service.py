@@ -103,7 +103,8 @@ class StatsDaemon(object):
     A statsd service implementation in Python + gevent.
     """
 
-    def __init__(self, bindaddr, sinkspecs, interval, percent, debug=0, ca=None, cert=None, key=None):
+    def __init__(self, bindaddr, sinkspecs, interval, percent, debug=0,
+            ca=None, cert=None, key=None, hostname=None):
         _, host, port = parse_addr(bindaddr)
         if port is None:
             self.exit(E_BADADDR % bindaddr)
@@ -117,7 +118,8 @@ class StatsDaemon(object):
         if not sinkspecs:
             self.exit(E_NOSINKS)
         self._sink = sink.GraphiteSink(
-                ca=resolve(ca), cert=resolve(cert), key=resolve(key))
+                ca=resolve(ca), cert=resolve(cert), key=resolve(key),
+                hostname=hostname)
         errors = []
         for spec in sinkspecs:
             try:
@@ -236,6 +238,7 @@ def main():
         help='daemonize the service')
     opts.add_option('-P', '--pid', default='/var/run/gstatsd.pid', dest='pid',
         help='pid path')
+    opts.add_option('-n', '--hostname', dest="hostname", help="Hostname")
     opts.add_option('-u', '--uid', dest='uid', type='int', help='owner of the daemon')
     opts.add_option('-h', '--help', dest='usage', action='store_true')
     opts.add_option('', '--ca', dest='ca', help='Certificat Authority')
@@ -255,7 +258,8 @@ def main():
 
     sd = StatsDaemon(options.bind_addr, options.sink, options.interval,
             options.percent, debug=options.verbose,
-            ca=options.ca, cert=options.cert, key=options.key)
+            ca=options.ca, cert=options.cert, key=options.key,
+            hostname=options.hostname)
     sd.start()
 
 
