@@ -39,21 +39,14 @@ class GraphiteSink(Sink):
     Sends stats to one or more Graphite servers.
     """
 
-<<<<<<< HEAD
     def __init__(self, ca=None, cert=None, key=None, hostname=None):
-=======
-    def __init__(self, ca=None, cert=None, key=None):
->>>>>>> Handling ssl authentification to carbon server.
         self._hosts = []
         self._ca = ca
         self._cert = cert
         self._key = key
-<<<<<<< HEAD
         if hostname is None:
             hostname = socket.gethostname()
         self._hostname = hostname
-=======
->>>>>>> Handling ssl authentification to carbon server.
 
     def add(self, spec):
         self._hosts.append(self._parse_hostport(spec))
